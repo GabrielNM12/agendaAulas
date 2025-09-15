@@ -10,6 +10,7 @@ builder.Services.AddDbContext<AppDbContext>(options => {
 
 builder.Services.AddScoped<AlunoService>();
 builder.Services.AddScoped<AgendamentoService>();
+builder.Services.AddScoped<AulaService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

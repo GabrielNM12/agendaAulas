@@ -29,7 +29,7 @@ public static class TipoAulaEndpoints {
 
                 if (tipoAula == null)
                 {
-                    return Results.NotFound( new { Message = "Tipo de aula não encontrada" });
+                    throw new Exception("Tipo de aula não encontrada");
                 }
 
                 return Results.Ok(tipoAula);
@@ -48,6 +48,36 @@ public static class TipoAulaEndpoints {
             });
         })
         .WithName("InsertTipoAula")
+        .WithOpenApi();
+
+        app.MapDelete("/delete/tipoaula/{id}", async (int id, AppDbContext db) =>
+        {
+            return await UtilHandlers.SafeExecuteAsync(async () =>
+            {
+                var tipoAula = await db.TipoAulas
+                                       .Where(a => a.Id == id)
+                                       .FirstOrDefaultAsync();
+
+                if (tipoAula == null)
+                {
+                    throw new Exception("Tipo de aula não encontrada");
+                }
+
+                var aula = await db.Aulas
+                                   .Where(a => a.TipoAulaId == id)
+                                   .FirstOrDefaultAsync();
+
+                if (aula != null) {
+                    throw new Exception("Tipo de aula possui aulas agendadas, não pode ser removido");
+                }
+
+                db.TipoAulas.Remove(tipoAula);
+                await db.SaveChangesAsync();
+
+                return Results.Ok( new { Message = "Tipo de aula removido com sucesso" });
+            });
+        })
+        .WithName("DeleteTipoAulaById")
         .WithOpenApi();
     }
 }

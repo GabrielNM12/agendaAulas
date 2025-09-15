@@ -24,7 +24,7 @@ public static class AgendamentoEndpoints
                                                 a.Id,
                                                 Aluno = a.Aluno.Nome,
                                                 TipoAula = a.Aula.TipoAula.Nome,
-                                                a.Aula.DataHora
+                                                DataHora = a.Aula.DataHora.ToString("dd/MM/yyyy HH:mm")
                                             })
                                             .ToListAsync();
 
@@ -48,13 +48,13 @@ public static class AgendamentoEndpoints
                                                 a.Id,
                                                 Aluno = a.Aluno.Nome,
                                                 TipoAula = a.Aula.TipoAula.Nome,
-                                                a.Aula.DataHora
+                                                DataHora = a.Aula.DataHora.ToString("dd/MM/yyyy HH:mm")
                                             })
                                             .FirstOrDefaultAsync();
 
                 if (agendamentos == null)
                 {
-                    return Results.NotFound(new { Message = "Agendamento não encontrado" });
+                    throw new Exception("Agendamento não encontrado");
                 }
 
                 return Results.Ok(agendamentos);
@@ -72,6 +72,35 @@ public static class AgendamentoEndpoints
             });
         })
         .WithName("InsertAgendamento")
+        .WithOpenApi();
+
+        app.MapDelete("/delete/agendamentos/{id}", async (int id, AppDbContext db) =>
+        {
+            return await UtilHandlers.SafeExecuteAsync(async () =>
+            {
+                var agendamentos = await db.Agendamentos
+                                            .Include(a => a.Aluno)
+                                            .Include(a => a.Aula)
+                                            .Include(a => a.Aula.TipoAula)
+                                            .Where(a => a.Id == id)
+                                            .FirstOrDefaultAsync();
+
+                if (agendamentos == null)
+                {
+                    throw new Exception("Agendamento não encontrado");
+                }
+
+                var agendamentoAluno    = agendamentos.Aluno.Nome;
+                var agendamentoAula     = agendamentos.Aula.TipoAula.Nome;
+                var agendamentoDataHora = agendamentos.Aula.DataHora.ToString("dd/MM/yyyy HH:mm");
+
+                db.Agendamentos.Remove(agendamentos);
+                await db.SaveChangesAsync();
+
+                return Results.Ok($"Agendamento do aluno {agendamentoAluno} na aula {agendamentoAula} no dia e horário {agendamentoDataHora} removido com sucesso");
+            });
+        })
+        .WithName("DeleteAgendamentoById")
         .WithOpenApi();
     }
 }

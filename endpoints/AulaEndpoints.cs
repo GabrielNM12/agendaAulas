@@ -1,6 +1,7 @@
 using agendaAulas.utils;
 using agendaAulas.models;
 using Microsoft.EntityFrameworkCore;
+using agendaAulas.services;
 
 namespace agendaAulas.endpoints;
 
@@ -18,7 +19,7 @@ public static class AulaEndpoints {
                                     {
                                         a.Id,
                                         TipoAula = a.TipoAula.Nome,
-                                        a.DataHora,
+                                        DataHora = a.DataHora.ToString("dd/MM/yyyy HH:mm"),
                                         a.CapacidadeMax
                                     })
                                     .ToListAsync();
@@ -39,14 +40,14 @@ public static class AulaEndpoints {
                                     {
                                         a.Id,
                                         TipoAula = a.TipoAula.Nome,
-                                        a.DataHora,
+                                        DataHora = a.DataHora.ToString("dd/MM/yyyy HH:mm"),
                                         a.CapacidadeMax
                                     })
                                     .FirstOrDefaultAsync();
 
                 if (aulas == null)
                 {
-                    return Results.NotFound( new { Message = "Aula não encontrada" });
+                    throw new Exception("Aula não encontrada");
                 }
 
                 return Results.Ok(aulas);
@@ -65,6 +66,18 @@ public static class AulaEndpoints {
             });
         })
         .WithName("InsertAulas")
+        .WithOpenApi();
+
+        app.MapDelete("/delete/aulas/{id}", async (AulaService service, int id) =>
+        {
+            return await UtilHandlers.SafeExecuteAsync(async () =>
+            {
+                var result = await service.DeleteAula(id);
+
+                return Results.Ok($"Aula removida com sucesso");
+            });
+        })
+        .WithName("DeleteAulaById")
         .WithOpenApi();
     }
 }

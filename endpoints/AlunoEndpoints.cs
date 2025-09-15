@@ -46,7 +46,7 @@ public static class AlunoEndpoints
 
                 if (alunos == null)
                 {
-                    return Results.NotFound(new { Message = "Aluno não encontrado" });
+                    throw new Exception("Aluno não encontrado");
                 }
 
                 return Results.Ok(alunos);
@@ -64,6 +64,17 @@ public static class AlunoEndpoints
             });
         })
         .WithName("InsertAlunos")
+        .WithOpenApi();
+
+        app.MapDelete("/delete/alunos/{id}", async (AlunoService service, int id) =>
+        {
+            return await UtilHandlers.SafeExecuteAsync(async () =>
+            {
+                var result = await service.DeleteAluno(id);
+                return Results.Ok($"Aluno {result.Nome} removido com sucesso");
+            });
+        })
+        .WithName("DeleteAlunoById")
         .WithOpenApi();
 
         app.MapGet("/reports/alunos/{id}", async (int id, AppDbContext db) =>
